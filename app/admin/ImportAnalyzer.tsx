@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileSpreadsheet, RefreshCw, SearchCheck, UploadCloud } from "lucide-react";
 import type { PublicImportAnalysis } from "../../lib/import-service";
 import type { ColumnRole, MappingOverrides, MappingSet } from "../../lib/import-types";
+import { ImportSuccessNotice } from "./AdminNavigation";
 
 type AnalyzeResponse = PublicImportAnalysis & { analysisId: string; expiresAt: string; message?: string };
 type Notice = { type: "success" | "error"; text: string };
@@ -112,6 +113,6 @@ export function ImportAnalyzer({ onImported }: { onImported(): Promise<void> }) 
       {!criticalReady && <p className="form-message error"><AlertTriangle size={18} />Укажите название, идентификатор и цену для каждой найденной таблицы.</p>}
       <div className="review-actions"><button className="button secondary" type="button" disabled={phase === "committing"} onClick={() => { setPreview(null); setPhase("select"); }}><RefreshCw size={17} />Другой файл</button><button className="button" type="button" disabled={!criticalReady || !supplier.trim() || phase === "committing"} onClick={commit}><CheckCircle2 size={18} />{phase === "committing" ? "Обновляем каталог…" : "Подтвердить импорт"}</button></div>
     </div>}
-    {notice && <p className={`form-message ${notice.type}`} role="status">{notice.type === "success" && <CheckCircle2 size={18} />}{notice.text}</p>}
+    {notice?.type === "success" ? <ImportSuccessNotice text={notice.text} /> : notice && <p className="form-message error" role="alert">{notice.text}</p>}
   </section>;
 }

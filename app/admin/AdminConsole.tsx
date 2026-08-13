@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Download, LockKeyhole, LogOut, PackageSearch, Store, Tags } from "lucide-react";
+import { Download, LockKeyhole, PackageSearch, Store, Tags } from "lucide-react";
 import { ImportAnalyzer } from "./ImportAnalyzer";
+import { AdminHeaderActions } from "./AdminNavigation";
 
 type HistoryRow = { id: number; supplier: string; file_name: string; row_count: number; status: string; created_at: string };
 type Overview = { products: number; suppliers: number; offers: number; history: HistoryRow[] };
@@ -54,7 +55,7 @@ export function AdminConsole() {
   </section>;
 
   return <section className="admin-console">
-    <div className="admin-title"><div><p className="eyebrow">Админ-панель</p><h1>Прайсы и каталог</h1><p>Система сама находит товарные таблицы, цены и характеристики. Перед записью вы увидите результат и сможете исправить сопоставление.</p></div><button className="text-button" onClick={logout}><LogOut size={18} />Выйти</button></div>
+    <div className="admin-title"><div><p className="eyebrow">Админ-панель</p><h1>Прайсы и каталог</h1><p>Система сама находит товарные таблицы, цены и характеристики. Перед записью вы увидите результат и сможете исправить сопоставление.</p></div><AdminHeaderActions onLogout={logout} /></div>
     <div className="stats-grid">
       <article><PackageSearch size={21} /><span>Товаров</span><strong>{overview?.products ?? 0}</strong></article>
       <article><Store size={21} /><span>Поставщиков</span><strong>{overview?.suppliers ?? 0}</strong></article>
