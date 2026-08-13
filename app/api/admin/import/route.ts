@@ -1,6 +1,6 @@
 import { isAdminRequest } from "../../../../lib/admin-auth";
-import { replaceSupplierOffers } from "../../../../lib/catalog";
-import { parseExcel } from "../../../../lib/import-excel";
+import { importService } from "../../../../lib/import-runtime";
+import { ImportWorkflowError } from "../../../../lib/import-service";
 
 export const dynamic = "force-dynamic";
 
@@ -9,18 +9,21 @@ export async function POST(request: Request) {
   const form = await request.formData();
   const file = form.get("file");
   if (!(file instanceof File)) return Response.json({ message: "Выберите Excel-файл." }, { status: 400 });
-  if (!file.name.toLocaleLowerCase().endsWith(".xlsx")) return Response.json({ message: "Поддерживаются только файлы .xlsx." }, { status: 400 });
-  if (file.size > 5 * 1024 * 1024) return Response.json({ message: "Файл превышает лимит 5 МБ." }, { status: 400 });
-
+  if (!file.name.toLocaleLowerCase().endsWith(".xlsx") || file.size > 5 * 1024 * 1024) {
+    return Response.json({ message: "Нужен файл .xlsx размером до 5 МБ." }, { status: 400 });
+  }
   try {
-    const parsed = await parseExcel(file);
-    if (parsed.errors.length) return Response.json({ message: "Исправьте ошибки в файле.", errors: parsed.errors.slice(0, 100) }, { status: 422 });
-    if (parsed.rows.length > 10_000) return Response.json({ message: "В файле больше 10 000 строк." }, { status: 400 });
-    const completed = await replaceSupplierOffers(parsed.rows, file.name);
-    const suppliers = completed.map((item) => item.supplier).join(", ");
-    return Response.json({ message: `Импортировано ${parsed.rows.length} строк. Обновлены поставщики: ${suppliers}.`, completed });
+    const input = await file.arrayBuffer();
+    const preview = await importService.analyzeImport({ input, fileName: file.name });
+    if (preview.errors.length || preview.requiresConfirmation) {
+      return Response.json({ message: "Проверьте распознанную структуру перед импортом.", ...preview }, { status: 409 });
+    }
+    const result = await importService.commitImport({ input, fileName: file.name, analysisId: preview.analysisId });
+    return Response.json({ message: `Импортировано ${result.rowCount} товаров.`, ...result });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Не удалось прочитать Excel-файл.";
-    return Response.json({ message }, { status: 500 });
+    if (error instanceof ImportWorkflowError) {
+      return Response.json({ message: error.message, code: error.code, errors: error.details }, { status: 422 });
+    }
+    return Response.json({ message: error instanceof Error ? error.message : "Не удалось прочитать Excel-файл." }, { status: 500 });
   }
 }

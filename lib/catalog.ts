@@ -246,8 +246,8 @@ export async function createImportAnalysis(input: { id: string; fileHash: string
 
 export async function getImportAnalysis(id: string) {
   await ensureCatalogDb();
-  const row = await getD1().prepare("SELECT file_hash, file_name, supplier_name, analysis_json, expires_at FROM import_analyses WHERE id=? AND expires_at>CURRENT_TIMESTAMP")
+  const row = await getD1().prepare("SELECT file_hash, file_name, supplier_name, analysis_json, expires_at FROM import_analyses WHERE id=?")
     .bind(id).first<{ file_hash: string; file_name: string; supplier_name: string; analysis_json: string; expires_at: string }>();
-  return row ? { fileHash: row.file_hash, fileName: row.file_name, supplierName: row.supplier_name,
+  return row ? { id, fileHash: row.file_hash, fileName: row.file_name, supplierName: row.supplier_name,
     analysis: JSON.parse(row.analysis_json) as unknown, expiresAt: row.expires_at } : null;
 }
