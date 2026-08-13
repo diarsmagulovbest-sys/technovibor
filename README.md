@@ -66,6 +66,7 @@ ADMIN_SESSION_SECRET=replace-with-a-long-random-secret
 ```bash
 npm test
 npm run lint
+npm run typecheck
 npm run build
 ```
 
