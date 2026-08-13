@@ -86,7 +86,7 @@ export function detectTable(sheetName: string, matrix: unknown[][]): DetectedTab
   for (let rowIndex = 0; rowIndex < scanLimit; rowIndex += 1) {
     const row = matrix[rowIndex] ?? [];
     const scored = headerScore(row);
-    if (scored.roleCount < 3) continue;
+    if (scored.roleCount < 2) continue;
     if (!best || scored.score > best.score) best = { row: rowIndex, score: scored.score, roleCount: scored.roleCount };
   }
   if (!best) return null;
