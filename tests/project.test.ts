@@ -16,3 +16,14 @@ test("finished site has product metadata and no starter preview", async () => {
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.equal(JSON.parse(hosting).d1, "DB");
 });
+
+test("admin import uses analyze, review, mapping, and commit stages", async () => {
+  const source = await readFile(new URL("../app/admin/ImportAnalyzer.tsx", import.meta.url), "utf8");
+  assert.match(source, /\/api\/admin\/import\/analyze/);
+  assert.match(source, /\/api\/admin\/import\/commit/);
+  assert.match(source, /Результат анализа/);
+  assert.match(source, /Сопоставление колонок/);
+  assert.match(source, /Предупреждения/);
+  assert.match(source, /analysisId/);
+  assert.match(source, /originalFile/);
+});
