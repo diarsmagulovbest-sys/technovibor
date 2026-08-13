@@ -11,7 +11,7 @@ export function BrandHeader() {
       <nav aria-label="Основная навигация">
         <Link href="/#catalog-title">Каталог</Link>
         <Link href="/#main-content">Поиск</Link>
-        <Link className="admin-link" href="/admin">Загрузить прайс</Link>
+        <a className="admin-link" href="/admin">Загрузить прайс</a>
       </nav>
     </header>
   );
