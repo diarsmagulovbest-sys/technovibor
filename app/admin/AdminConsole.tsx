@@ -11,6 +11,7 @@ export function AdminConsole() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState("");
 
   const refresh = useCallback(async () => {
     const response = await fetch("/api/admin/status", { cache: "no-store" });
@@ -50,7 +51,7 @@ export function AdminConsole() {
       setLoading(false); return;
     }
     setMessage({ type: "success", text: result.message || "Прайс успешно обновлён." });
-    event.currentTarget.reset(); await refresh(); setLoading(false);
+    event.currentTarget.reset(); setSelectedFileName(""); await refresh(); setLoading(false);
   }
 
   async function logout() {
@@ -84,7 +85,8 @@ export function AdminConsole() {
       <div className="admin-grid">
         <form className="upload-card" onSubmit={upload}>
           <div className="upload-card-head"><div><p className="eyebrow">Новый импорт</p><h2>Загрузить Excel</h2></div><FileSpreadsheet size={30} /></div>
-          <label className="file-drop" htmlFor="price-file"><UploadCloud size={34} /><strong>Выберите файл .xlsx</strong><span>До 5 МБ, не более 10 000 строк</span><input id="price-file" name="file" type="file" accept=".xlsx" required /></label>
+          <label className="file-drop" htmlFor="price-file"><UploadCloud size={34} /><strong>{selectedFileName || "Нажмите, чтобы выбрать файл .xlsx"}</strong><span>Excel .xlsx, до 5 МБ, не более 10 000 строк</span></label>
+          <input className="file-input" id="price-file" name="file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required onChange={(event) => setSelectedFileName(event.currentTarget.files?.[0]?.name || "")} />
           <div className="required-columns"><span>Обязательные колонки:</span><code>Артикул</code><code>Название</code><code>Цена</code><code>Поставщик</code></div>
           {message && <p className={`form-message ${message.type}`} role="status">{message.type === "success" && <CheckCircle2 size={18} />}{message.text}</p>}
           <button className="button" type="submit" disabled={loading}>{loading ? "Проверяем и загружаем…" : "Проверить и импортировать"}</button>
