@@ -68,11 +68,11 @@ test("commit blocks unresolved critical mappings", async () => {
 
 test("analyze stores a compact preview and commit materializes rows", async () => {
   const input = new TextEncoder().encode("first").buffer;
-  let stored: Awaited<ReturnType<ReturnType<typeof createImportService>["analyzeImport"]>> | undefined;
+  let storedId = "";
   let written = 0;
   const service = createImportService({
     analyze: async () => analysis(), now: () => new Date("2026-08-13T10:00:00Z"), createId: () => "analysis-1",
-    saveAnalysis: async (record) => { stored = { analysisId: record.id, expiresAt: record.expiresAt, ...record.analysis } as typeof stored; },
+    saveAnalysis: async (record) => { storedId = record.id; },
     loadAnalysis: async () => ({ id: "analysis-1", fileHash: await sha256Hex(input), fileName: "price.xlsx", supplierName: "VSTrade", analysis: {}, expiresAt: "2026-08-13T10:30:00.000Z" }),
     writeCatalog: async (rows) => { written = rows.length; return [{ supplier: "VSTrade", rows: rows.length }]; },
     saveProfile: async () => undefined,
@@ -81,7 +81,7 @@ test("analyze stores a compact preview and commit materializes rows", async () =
   assert.equal(preview.analysisId, "analysis-1");
   assert.equal(preview.rowCount, 1);
   assert.equal("rows" in preview, false);
-  assert.equal(stored?.analysisId, "analysis-1");
+  assert.equal(storedId, "analysis-1");
   const result = await service.commitImport({ input, fileName: "price.xlsx", analysisId: "analysis-1", supplier: "VSTrade" });
   assert.equal(written, 1);
   assert.equal(result.rowCount, 1);

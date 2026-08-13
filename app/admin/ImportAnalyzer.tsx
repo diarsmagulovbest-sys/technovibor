@@ -41,12 +41,16 @@ export function ImportAnalyzer({ onImported }: { onImported(): Promise<void> }) 
   const [phase, setPhase] = useState<"select" | "analyzing" | "review" | "committing">("select");
   const [notice, setNotice] = useState<Notice | null>(null);
 
-  const criticalReady = useMemo(() => preview?.sheets.filter((sheet) => sheet.table).every((sheet) => {
-    const table = sheet.table!;
-    return hasRole(table.mapping, overrides, table.id, "name")
-      && (["sku", "article", "external_id"] as ColumnRole[]).some((role) => hasRole(table.mapping, overrides, table.id, role))
-      && (["special_price_kzt", "price_kzt"] as ColumnRole[]).some((role) => hasRole(table.mapping, overrides, table.id, role));
-  }) ?? false, [preview, overrides]);
+  const criticalReady = useMemo(() => {
+    if (!preview || preview.rowCount === 0) return false;
+    const tables = preview.sheets.filter((sheet) => sheet.table);
+    return tables.length > 0 && tables.every((sheet) => {
+      const table = sheet.table!;
+      return hasRole(table.mapping, overrides, table.id, "name")
+        && (["sku", "article", "external_id"] as ColumnRole[]).some((role) => hasRole(table.mapping, overrides, table.id, role))
+        && (["special_price_kzt", "price_kzt"] as ColumnRole[]).some((role) => hasRole(table.mapping, overrides, table.id, role));
+    });
+  }, [preview, overrides]);
 
   function chooseFile(file: File | null) {
     setOriginalFile(file); setPreview(null); setOverrides({}); setNotice(null); setPhase("select");

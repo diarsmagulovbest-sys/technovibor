@@ -61,6 +61,12 @@ test("reports missing critical columns instead of importing", () => {
   assert.ok(result.errors.some((error) => /цены|идентификатор/i.test(error)));
 });
 
+test("keeps a distinct fingerprint when a detected table needs manual mapping", () => {
+  const first = parseRows([["Название", "Наличие"], ["Ноутбук", 10]]).analysis;
+  const second = parseRows([["Описание", "Гарантия"], ["Монитор", 12]]).analysis;
+  assert.notEqual(first.fingerprint, second.fingerprint);
+});
+
 test("reports invalid rows and does not import them", () => {
   const result = parseRows([
     ["Артикул", "Название", "Цена", "Поставщик"],

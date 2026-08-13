@@ -65,6 +65,7 @@ export function analyzeWorkbook(sheets: WorkbookSheet[], options: AnalyzeOptions
     }
     const table = applyMapping(detected, options.overrides);
     const mapping = table.mapping;
+    signatures.push(`${normalizeHeader(sheet.sheet)}:${table.headers.map(normalizeHeader).join("|")}`);
     const identifierMapping = mapping.sku ?? mapping.article ?? mapping.external_id;
     const priceMapping = mapping.special_price_kzt ?? mapping.price_kzt;
     if (!mapping.name || !identifierMapping || !priceMapping) {
@@ -74,7 +75,6 @@ export function analyzeWorkbook(sheets: WorkbookSheet[], options: AnalyzeOptions
       continue;
     }
 
-    signatures.push(`${normalizeHeader(sheet.sheet)}:${table.headers.map(normalizeHeader).join("|")}`);
     let currentSubcategory = "";
     let productRows = 0;
     let invalidRows = 0;

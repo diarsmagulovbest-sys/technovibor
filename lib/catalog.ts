@@ -1,4 +1,5 @@
 import { getD1 } from "../db";
+import { chunkForJson, OFFER_BATCH_SQL, PRODUCT_BATCH_SQL } from "./catalog-batching";
 import { buildProductSearchText, normalizeSearch } from "./catalog-search";
 import type { AdaptiveImportRow, ProductAttributes } from "./import-types";
 
@@ -190,23 +191,33 @@ export async function replaceSupplierOffers(rows: ImportRow[], fileName: string)
       .bind(supplier.id, fileName, supplierRows.length).first<{ id: number }>();
     if (!staged) throw new Error(`Не удалось начать импорт «${supplierName}».`);
     try {
-      for (const row of supplierRows) {
-        await d1.prepare(`INSERT INTO products(sku, name, brand, description, category, subcategory, attributes_json, search_text)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(sku) DO UPDATE SET name=excluded.name, brand=excluded.brand,
-          description=excluded.description, category=excluded.category, subcategory=excluded.subcategory,
-          attributes_json=excluded.attributes_json, search_text=excluded.search_text, updated_at=CURRENT_TIMESTAMP`)
-          .bind(row.sku, row.name, row.brand, row.description, row.category, row.subcategory, JSON.stringify(row.attributes), buildProductSearchText(row)).run();
-        const product = await d1.prepare("SELECT id FROM products WHERE sku=?").bind(row.sku).first<{ id: number }>();
-        if (!product) throw new Error(`Не удалось сохранить товар ${row.sku}.`);
-        await d1.prepare(`INSERT INTO offers(product_id, supplier_id, import_id, price, stock, raw_json) VALUES (?, ?, ?, ?, ?, ?)
-          ON CONFLICT(import_id, product_id) DO UPDATE SET price=excluded.price, stock=excluded.stock, raw_json=excluded.raw_json`)
-          .bind(product.id, supplier.id, staged.id, row.price, row.stock, JSON.stringify(row.raw)).run();
+      const payloads = supplierRows.map((row) => ({
+        sku: row.sku,
+        name: row.name,
+        brand: row.brand,
+        description: row.description,
+        category: row.category,
+        subcategory: row.subcategory,
+        attributesJson: JSON.stringify(row.attributes),
+        searchText: buildProductSearchText(row),
+        price: row.price,
+        stock: row.stock,
+        rawJson: JSON.stringify(row.raw),
+      }));
+      const statements: D1PreparedStatement[] = [];
+      for (const chunk of chunkForJson(payloads)) {
+        const json = JSON.stringify(chunk);
+        statements.push(
+          d1.prepare(PRODUCT_BATCH_SQL).bind(json),
+          d1.prepare(OFFER_BATCH_SQL).bind(supplier.id, staged.id, json),
+        );
       }
-      await d1.batch([
+      statements.push(
         d1.prepare("UPDATE suppliers SET active_import_id=? WHERE id=?").bind(staged.id, supplier.id),
         d1.prepare("UPDATE imports SET status='completed' WHERE id=?").bind(staged.id),
         d1.prepare("DELETE FROM offers WHERE supplier_id=? AND import_id<>?").bind(supplier.id, staged.id),
-      ]);
+      );
+      await d1.batch(statements);
       completed.push({ supplier: supplierName, rows: supplierRows.length });
     } catch (error) {
       await d1.prepare("UPDATE imports SET status='failed' WHERE id=?").bind(staged.id).run();
