@@ -42,6 +42,7 @@ type ImportServiceDependencies = {
   analyze(input: ArrayBuffer, options: AnalyzeOptions): Promise<ImportAnalysis>;
   saveAnalysis(record: StoredImportAnalysis): Promise<void>;
   loadAnalysis(id: string): Promise<StoredImportAnalysis | null>;
+  loadProfile?(fingerprint: string): Promise<{ supplierName: string; mapping: unknown } | null>;
   writeCatalog(rows: AdaptiveImportRow[], fileName: string): Promise<Array<{ supplier: string; rows: number }>>;
   saveProfile(input: { supplierName: string; fingerprint: string; mapping: unknown }): Promise<void>;
   now?: () => Date;
@@ -107,10 +108,18 @@ export function createImportService(dependencies: ImportServiceDependencies) {
 
   return {
     async analyzeImport(input: { input: ArrayBuffer; fileName: string; supplier?: string }) {
-      const [fileHash, analysis] = await Promise.all([
+      const [fileHash, initialAnalysis] = await Promise.all([
         sha256Hex(input.input),
         dependencies.analyze(input.input, { fileName: input.fileName, supplier: input.supplier }),
       ]);
+      const profile = await dependencies.loadProfile?.(initialAnalysis.fingerprint);
+      const analysis = profile
+        ? await dependencies.analyze(input.input, {
+          fileName: input.fileName,
+          supplier: input.supplier || profile.supplierName,
+          overrides: profile.mapping as MappingOverrides,
+        })
+        : initialAnalysis;
       const preview = presentAnalysis(analysis);
       const analysisId = createId();
       const expiresAt = new Date(now().getTime() + 30 * 60 * 1000).toISOString();
@@ -151,9 +160,10 @@ export function createImportService(dependencies: ImportServiceDependencies) {
       }
       if (!analysis.rows.length) throw new ImportWorkflowError("EMPTY_IMPORT", "В файле не найдено товаров для импорта.");
       const completed = await dependencies.writeCatalog(analysis.rows, input.fileName);
-      const mappings = Object.fromEntries(analysis.sheets
+      const mappings: MappingOverrides = Object.fromEntries(analysis.sheets
         .filter((sheet) => sheet.table)
-        .map((sheet) => [sheet.table!.id, sheet.table!.mapping]));
+        .map((sheet) => [sheet.table!.id, Object.fromEntries(Object.entries(sheet.table!.mapping)
+          .map(([role, mapping]) => [role, mapping?.column ?? null]))]));
       await dependencies.saveProfile({ supplierName: supplier, fingerprint: analysis.fingerprint, mapping: mappings });
       return { rowCount: analysis.rows.length, completed, warnings: analysis.warnings };
     },

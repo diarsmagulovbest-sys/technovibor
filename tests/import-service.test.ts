@@ -86,3 +86,20 @@ test("analyze stores a compact preview and commit materializes rows", async () =
   assert.equal(written, 1);
   assert.equal(result.rowCount, 1);
 });
+
+test("analyze reuses a saved supplier mapping profile", async () => {
+  const input = new TextEncoder().encode("first").buffer;
+  const calls: Array<{ supplier?: string; overrides?: unknown }> = [];
+  const savedMapping = { "price-4": { name: 2, special_price_kzt: 10 } };
+  const service = createImportService({
+    analyze: async (_input, options) => { calls.push(options); return analysis(); },
+    loadProfile: async () => ({ supplierName: "Remembered supplier", mapping: savedMapping }),
+    now: () => new Date("2026-08-13T10:00:00Z"), createId: () => "analysis-1",
+    saveAnalysis: async () => undefined, loadAnalysis: async () => null,
+    writeCatalog: async () => [], saveProfile: async () => undefined,
+  });
+  await service.analyzeImport({ input, fileName: "price.xlsx" });
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1].supplier, "Remembered supplier");
+  assert.deepEqual(calls[1].overrides, savedMapping);
+});

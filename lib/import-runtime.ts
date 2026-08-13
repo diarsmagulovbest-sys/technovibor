@@ -14,6 +14,7 @@ export const importService = createImportService({
     expiresAt: record.expiresAt,
   }),
   loadAnalysis: getImportAnalysis,
+  loadProfile: findImportProfile,
   writeCatalog: replaceSupplierOffers,
   saveProfile: saveImportProfile,
 });
