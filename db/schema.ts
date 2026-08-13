@@ -8,6 +8,10 @@ export const products = sqliteTable(
     sku: text("sku").notNull(),
     name: text("name").notNull(),
     brand: text("brand").notNull().default(""),
+    description: text("description").notNull().default(""),
+    category: text("category").notNull().default(""),
+    subcategory: text("subcategory").notNull().default(""),
+    attributesJson: text("attributes_json").notNull().default("{}"),
     searchText: text("search_text").notNull(),
     createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
     updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
@@ -50,6 +54,7 @@ export const offers = sqliteTable(
     supplierId: integer("supplier_id").notNull(),
     importId: integer("import_id").notNull(),
     price: integer("price").notNull(),
+    stock: integer("stock"),
     rawJson: text("raw_json").notNull().default("{}"),
     createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   },
@@ -58,4 +63,30 @@ export const offers = sqliteTable(
     index("idx_offers_product").on(table.productId),
     index("idx_offers_supplier_import").on(table.supplierId, table.importId),
   ],
+);
+
+export const importProfiles = sqliteTable(
+  "import_profiles",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    supplierName: text("supplier_name").notNull(),
+    fingerprint: text("fingerprint").notNull(),
+    mappingJson: text("mapping_json").notNull(),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [uniqueIndex("idx_import_profiles_fingerprint_unique").on(table.fingerprint)],
+);
+
+export const importAnalyses = sqliteTable(
+  "import_analyses",
+  {
+    id: text("id").primaryKey(),
+    fileHash: text("file_hash").notNull(),
+    fileName: text("file_name").notNull(),
+    supplierName: text("supplier_name").notNull(),
+    analysisJson: text("analysis_json").notNull(),
+    expiresAt: text("expires_at").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_import_analyses_expires_at").on(table.expiresAt)],
 );
