@@ -4,7 +4,7 @@
 
 **Goal:** Make returning from the authenticated admin page to the public catalog obvious on every screen size.
 
-**Architecture:** Add ordinary Next.js links at the two user decision points: the persistent admin header and the successful import result. Keep logout as a separate action and use existing button styles with a small responsive action-group wrapper.
+**Architecture:** Add ordinary semantic anchor links at the two user decision points: the persistent admin header and the successful import result. Keep logout as a separate action and use existing button styles with a small responsive action-group wrapper.
 
 **Tech Stack:** React 19, Next.js-compatible `Link`, TypeScript, CSS, Node test runner.
 
@@ -49,7 +49,7 @@ Expected: FAIL because neither admin component contains the new catalog action.
 
 - [ ] **Step 3: Implement the persistent and success actions**
 
-Create `AdminHeaderActions` and `ImportSuccessNotice` using `Link` and an arrow icon. Use the first beside logout in `AdminConsole` and the second for the successful notice in `ImportAnalyzer`.
+Create `AdminHeaderActions` and `ImportSuccessNotice` using semantic anchors and arrow icons. Use the first beside logout in `AdminConsole` and the second for the successful notice in `ImportAnalyzer`.
 
 - [ ] **Step 4: Add responsive styles**
 
