@@ -31,7 +31,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .header nav { display: flex; align-items: center; gap: 28px; color: var(--ink-soft); font-weight: 600; font-size: 14px; }
 .header nav a { min-height: 44px; display: inline-flex; align-items: center; transition: color .18s ease; }
 .header nav a:hover { color: var(--ink); }
-.header .admin-link { padding: 0 18px; border: 1px solid var(--ink); border-radius: 999px; color: var(--ink); }
+.header .admin-link { position: relative; z-index: 1; padding: 0 18px; border: 1px solid var(--ink); border-radius: 999px; color: var(--ink); cursor: pointer; pointer-events: auto; }
 
 .hero { width: min(1180px, calc(100% - 40px)); margin: 0 auto; min-height: 600px; padding: 72px 0 80px; display: grid; grid-template-columns: 1.18fr .82fr; gap: 64px; align-items: center; }
 .eyebrow { margin: 0 0 15px; display: flex; align-items: center; gap: 8px; color: var(--blue); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
