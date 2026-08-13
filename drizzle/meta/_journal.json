@@ -8,6 +8,13 @@
       "when": 1786526480713,
       "tag": "0000_daily_masked_marvel",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1786599576499,
+      "tag": "0001_exotic_the_fallen",
+      "breakpoints": true
     }
   ]
 }
