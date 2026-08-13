@@ -1,5 +1,6 @@
 import { applyMapping, cleanCell, detectTable, normalizeHeader } from "./import-detection";
 import type { AdaptiveImportRow, ImportAnalysis, MappingOverrides, WorkbookSheet } from "./import-types";
+import { extractProductAttributes } from "./spec-extraction";
 
 const knownBrands = ["Lenovo", "ASUS", "Acer", "HP", "Dell", "MSI", "Apple", "Huawei", "Honor", "Samsung", "Xiaomi", "Gigabyte", "AMD", "Intel", "UGREEN", "Ippon", "Epson"];
 
@@ -131,7 +132,7 @@ export function analyzeWorkbook(sheets: WorkbookSheet[], options: AnalyzeOptions
         supplier: supplierValue,
         category: categoryValue,
         subcategory: currentSubcategory,
-        attributes: { rulesVersion: 1 },
+        attributes: extractProductAttributes({ name: rawName, description, category: categoryValue }),
         raw,
         source: { sheet: sheet.sheet, row: table.headerRow + rowIndex + 2 },
       });
